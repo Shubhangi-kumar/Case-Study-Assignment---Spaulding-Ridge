@@ -1,0 +1,103 @@
+-------------------------------------Group Employees by Years of Experience and Optionally group breakdown by Location or Role-----------------------------------------------------------------------------------
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TOTAL_EMPLOYEES 301
+
+typedef struct {
+    int experience; // in years
+    char role[20];
+    char location[20];
+} Employee;
+
+const char* roles[] = {"Manager", "Senior Associate", "Associate", "Analyst"};
+const char* locations[] = {"Pune", "Bangalore", "Jaipur"};
+
+void generateEmployees(Employee employees[]) {
+    for (int i = 0; i < TOTAL_EMPLOYEES; ++i) {
+        employees[i].experience = rand() % 21; // 0 to 20 years
+        strcpy(employees[i].role, roles[rand() % 4]);
+        strcpy(employees[i].location, locations[rand() % 3]);
+    }
+}
+
+int experienceRangeIndex(int years) {
+    if (years <= 1) return 0;
+    else if (years <= 2) return 1;
+    else if (years <= 5) return 2;
+    else if (years <= 10) return 3;
+    else return 4;
+}
+
+void groupByExperience(Employee employees[]) {
+    const char* ranges[] = {"0–1", "1–2", "2–5", "5–10", "10+"};
+    int counts[5] = {0};
+
+    for (int i = 0; i < TOTAL_EMPLOYEES; ++i) {
+        counts[experienceRangeIndex(employees[i].experience)]++;
+    }
+
+    printf("Employees by Experience Ranges:\n");
+    for (int i = 0; i < 5; ++i) {
+        printf("%s years: %d employees\n", ranges[i], counts[i]);
+    }
+}
+
+void groupByExperienceAnd(Employee employees[], const char* key) {
+    const char* ranges[] = {"0–1", "1–2", "2–5", "5–10", "10+"};
+    int counts[5][10] = {0}; // 5 experience ranges x max 10 roles or locations
+
+    const char** groupList;
+    int groupSize = 0;
+
+    if (strcmp(key, "role") == 0) {
+        groupList = roles;
+        groupSize = 4;
+    } else if (strcmp(key, "location") == 0) {
+        groupList = locations;
+        groupSize = 3;
+    } else {
+        printf("Invalid grouping key.\n");
+        return;
+    }
+
+    for (int i = 0; i < TOTAL_EMPLOYEES; ++i) {
+        int expIndex = experienceRangeIndex(employees[i].experience);
+        for (int j = 0; j < groupSize; ++j) {
+            if ((strcmp(key, "role") == 0 && strcmp(employees[i].role, groupList[j]) == 0) ||
+                (strcmp(key, "location") == 0 && strcmp(employees[i].location, groupList[j]) == 0)) {
+                counts[expIndex][j]++;
+                break;
+            }
+        }
+    }
+
+    printf("Employees by Experience and %s:\n", key);
+    for (int i = 0; i < 5; ++i) {
+        printf("%s years:\n", ranges[i]);
+        for (int j = 0; j < groupSize; ++j) {
+            printf("  %s: %d\n", groupList[j], counts[i][j]);
+        }
+    }
+}
+
+int main() {
+    Employee employees[TOTAL_EMPLOYEES];
+    generateEmployees(employees);
+
+    groupByExperience(employees);
+
+    printf("\nDo you want a breakdown by Role or Location? (Enter 'role' or 'location', or 'none'): ");
+    char choice[20];
+    scanf("%s", choice);
+
+    if (strcmp(choice, "role") == 0 || strcmp(choice, "location") == 0) {
+        groupByExperienceAnd(employees, choice);
+    } else {
+        printf("No additional grouping selected.\n");
+    }
+
+    return 0;
+}
