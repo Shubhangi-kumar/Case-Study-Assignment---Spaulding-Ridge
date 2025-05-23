@@ -1,0 +1,154 @@
+--------------------------------------compensation_chart.c------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <mysql/mysql.h>
+
+#define DB_HOST "localhost"
+#define DB_USER "your_user"
+#define DB_PASS "your_password"
+#define DB_NAME "your_database"
+
+void draw_bar(float value) {
+    int bars = value / 10000;  // Scale compensation to fit screen
+    for (int i = 0; i < bars; i++) {
+        printf("#");
+    }
+    printf(" (%.2f)\n", value);
+}
+
+int main() {
+    MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+
+    conn = mysql_init(NULL);
+    if (!mysql_real_connect(conn, DB_HOST, DB_USER, DB_PASS, DB_NAME, 0, NULL, 0)) {
+        fprintf(stderr, "❌ Connection failed: %s\n", mysql_error(conn));
+        exit(EXIT_FAILURE);
+    }
+
+    // Call stored procedure (adjust TRUE/FALSE)
+    if (mysql_query(conn, "CALL GetAverageCompensationAllLocations(TRUE)")) {
+        fprintf(stderr, "❌ Query failed: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        exit(EXIT_FAILURE);
+    }
+
+    res = mysql_store_result(conn);
+    if (res == NULL) {
+        fprintf(stderr, "❌ No result set: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("\n📊 Average Compensation by Location:\n\n");
+    while ((row = mysql_fetch_row(res))) {
+        printf("%-15s | ", row[0]);  // Location name
+        draw_bar(atof(row[1]));      // Average compensation
+    }
+
+    mysql_free_result(res);
+    mysql_close(conn);
+
+    return 0;
+}
+
+------------------------------------------Toggle to include/exclude Inactive employees------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------HTML--------------------------------------------------------------------------------------------------------------------------------------------------------------
+<label class="switch">
+  <input type="checkbox" id="toggleInactive">
+  <span class="slider"></span>
+</label>
+
+<style>
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  background-color: #ccc;
+  border-radius: 24px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: 0.4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.4s;
+}
+input:checked + .slider {
+  background-color: #2196F3;
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+</style>
+
+----------------------------------Running the below code when toggle is 1 (active) output will show Employee Name, Role, Location, and Compensation-----------------------------------------------------------------
+
+#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    char name[50];
+    char role[50];
+    char location[50];
+    double compensation;
+    int isActive; // 1 = active, 0 = inactive
+} Employee;
+
+void printEmployees(Employee employees[], int count, int includeInactive) {
+    printf("%-15s %-15s %-15s %-15s\n", "Name", "Role", "Location", "Compensation");
+    printf("---------------------------------------------------------------\n");
+
+    for (int i = 0; i < count; i++) {
+        if (includeInactive || employees[i].isActive) {
+            printf("%-15s %-15s %-15s ₹%-14.2f\n",
+                employees[i].name,
+                employees[i].role,
+                employees[i].location,
+                employees[i].compensation);
+        }
+    }
+}
+
+int main() {
+    Employee employees[] = {
+        {"Alice", "Manager", "Mumbai", 1200000, 1},
+        {"Bob", "Developer", "Delhi", 900000, 0},
+        {"Charlie", "Designer", "Bangalore", 750000, 1},
+        {"David", "Tester", "Chennai", 600000, 0}
+    };
+
+    int count = sizeof(employees) / sizeof(employees[0]);
+    int toggleIncludeInactive = 0; // 0 = exclude inactive, 1 = include inactive
+
+    printf("Toggle is OFF (Exclude inactive employees):\n");
+    printEmployees(employees, count, toggleIncludeInactive);
+
+    printf("\nToggle is ON (Include inactive employees):\n");
+    toggleIncludeInactive = 1;
+    printEmployees(employees, count, toggleIncludeInactive);
+
+    return 0;
+}
