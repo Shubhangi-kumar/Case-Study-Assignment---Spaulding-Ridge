@@ -1,0 +1,72 @@
+--------------------------------------------Simulate Compensation Increments------------------------------------------------------------------------------------------------------------------------------------------
+
+#include <stdio.h>
+#include <string.h>
+
+#define EMPLOYEE_COUNT 301
+
+typedef struct {
+    char name[50];
+    char role[30];
+    char location[30];
+    float currentComp; // in INR
+} Employee;
+
+void applyGlobalIncrement(Employee employees[], int count, float percent) {
+    printf("Applying global increment of %.2f%%:\n", percent);
+    for (int i = 0; i < count; i++) {
+        float updated = employees[i].currentComp * (1 + percent / 100);
+        printf("%-15s %-10s %-10s Current: ₹%.2f → Updated: ₹%.2f\n",
+               employees[i].name,
+               employees[i].role,
+               employees[i].location,
+               employees[i].currentComp,
+               updated);
+    }
+}
+
+void applyLocationIncrement(Employee employees[], int count, const char* location, float percent) {
+    printf("\nApplying %.2f%% increment to location: %s\n", percent, location);
+    for (int i = 0; i < count; i++) {
+        if (strcmp(employees[i].location, location) == 0) {
+            float updated = employees[i].currentComp * (1 + percent / 100);
+            printf("%-15s %-10s %-10s Current: ₹%.2f → Updated: ₹%.2f\n",
+                   employees[i].name,
+                   employees[i].role,
+                   employees[i].location,
+                   employees[i].currentComp,
+                   updated);
+        }
+    }
+}
+
+int main() {
+    Employee employees[EMPLOYEE_COUNT] = {
+        {"Aditi Khanna", "Analyst", "Jaipur", 653874},
+        {"Pooja Kaur", "Senior Analyst", "Bangalore", 798703},
+        {"Kajal Mehta", "Analyst", "Bangalore", 663851},
+        {"Amaya Joshi", "Analyst", "Jaipur", 570000},
+        {"Bilal Kulkarni", "Associate", "Jaipur", 976125}
+    };
+
+    float globalIncrement;
+    printf("Enter global fixed percentage increment: ");
+    scanf("%f", &globalIncrement);
+
+    applyGlobalIncrement(employees, EMPLOYEE_COUNT, globalIncrement);
+
+    // Bonus: Custom location increment
+    char locChoice[30];
+    float locPercent;
+    printf("\nDo you want to apply custom increment by location? (yes/no): ");
+    scanf("%s", locChoice);
+    if (strcmp(locChoice, "yes") == 0) {
+        printf("Enter location: ");
+        scanf("%s", locChoice);
+        printf("Enter increment percentage for %s: ", locChoice);
+        scanf("%f", &locPercent);
+        applyLocationIncrement(employees, EMPLOYEE_COUNT, locChoice, locPercent);
+    }
+
+    return 0;
+}
